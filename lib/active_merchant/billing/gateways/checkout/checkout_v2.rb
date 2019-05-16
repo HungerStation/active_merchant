@@ -1,11 +1,7 @@
+require 'active_merchant/billing/gateways/checkout/checkout_payment_token'
+
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
-    class CheckoutPaymentToken < PaymentToken
-      def type
-        'checkout'
-      end
-    end
-
     class CheckoutV2Gateway < Gateway
       self.display_name = 'Checkout.com Unified Payments'
       self.homepage_url = 'https://www.checkout.com/'
