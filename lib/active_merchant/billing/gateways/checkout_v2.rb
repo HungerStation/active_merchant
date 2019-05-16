@@ -22,6 +22,12 @@ module ActiveMerchant #:nodoc:
         super
       end
 
+      def get_payment(payment_id)
+        post = { id: payment_id }
+
+        commit(:get, :get_payment, post)
+      end
+
       def purchase(amount, payment_method, options={})
         options[:capture] = true
         authorize(amount, payment_method, options)
@@ -37,7 +43,7 @@ module ActiveMerchant #:nodoc:
         add_transaction_data(post, options)
         add_3ds(post, options)
 
-        commit(:authorize, post)
+        commit(:post, :authorize, post)
       end
 
       def capture(amount, authorization, options={})
@@ -45,12 +51,12 @@ module ActiveMerchant #:nodoc:
         add_invoice(post, amount, options)
         add_customer_data(post, options)
 
-        commit(:capture, post, authorization)
+        commit(:post, :capture, post, authorization)
       end
 
       def void(authorization, options={})
         post = {}
-        commit(:void, post, authorization)
+        commit(:post, :void, post, authorization)
       end
 
       def refund(amount, authorization, options={})
@@ -58,7 +64,7 @@ module ActiveMerchant #:nodoc:
         add_invoice(post, amount, options)
         add_customer_data(post, options)
 
-        commit(:refund, post, authorization)
+        commit(:post, :refund, post, authorization)
       end
 
       def verify(payment_method, options={})
@@ -96,7 +102,7 @@ module ActiveMerchant #:nodoc:
         post[:billing_address] = build_billing_address(address)
         post[:phone] = phone
 
-        commit(:tokenize_credit_card, post)
+        commit(:post, :tokenize_credit_card, post)
       end
 
       def supports_scrubbing?
@@ -203,16 +209,31 @@ module ActiveMerchant #:nodoc:
         end
       end
 
-      def commit(action, post, authorization = nil)
+      def api_request(method, url, post = nil, action)
+        raw_response = response = nil
+
         begin
-          raw_response = ssl_post(url(post, action, authorization), post.to_json, headers(action))
-          response = parse(raw_response)
-          if action == :capture && response.key?('_links')
-            response['id'] = response['_links']['payment']['href'].split('/')[-1]
+          if method != :get
+            raw_response = ssl_request(method, url, post.to_json, headers(action))
+          else
+            raw_response = ssl_request(method, url, nil, headers(action))
           end
+
+          response = parse(raw_response)
         rescue ResponseError => e
           raise unless(e.response.code.to_s =~ /4\d\d/)
           response = parse(e.response.body)
+        end
+
+        response
+      end
+
+      def commit(method, action, post, authorization = nil)
+        url = url(post, action, authorization)
+        response = api_request(method, url, post, action)
+
+        if action == :capture && response.key?('_links')
+          response['id'] = response['_links']['payment']['href'].split('/')[-1]
         end
 
         succeeded = success_from(response, action)
@@ -256,6 +277,8 @@ module ActiveMerchant #:nodoc:
           "#{base_url}/payments/#{authorization}/refunds"
         elsif action == :void
           "#{base_url}/payments/#{authorization}/voids"
+        elsif action == :get_payment
+          "#{base_url}/payments/#{post[:id]}"
         elsif action == :tokenize_credit_card
           "#{base_url}/tokens"
         else
@@ -285,13 +308,13 @@ module ActiveMerchant #:nodoc:
       end
 
       def success_from(response, action = nil)
-        successful = response['response_summary'] == 'Approved' || !response.key?('response_summary') && response.key?('action_id')
-
-        if action == :tokenize_credit_card
-          successful = response.key?('token')
+        if action == :get_payment
+          response.key?('id')
+        elsif action == :tokenize_credit_card
+          response.key?('token')
+        else
+          response['response_summary'] == 'Approved' || !response.key?('response_summary') && response.key?('action_id')
         end
-
-        successful
       end
 
       def message_from(succeeded, response)
