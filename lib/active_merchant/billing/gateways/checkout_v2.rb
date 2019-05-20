@@ -145,6 +145,9 @@ module ActiveMerchant #:nodoc:
 
         elsif payment_method.is_a?(CheckoutPaymentToken)
           add_payment_token(post, payment_method)
+
+        elsif payment_method.is_a?(CheckoutPaymentId)
+          add_payment_id(post, payment_method)
         end
 
         elsif payment_method.is_a?(CheckoutPaymentId)
