@@ -149,10 +149,6 @@ module ActiveMerchant #:nodoc:
         elsif payment_method.is_a?(CheckoutPaymentId)
           add_payment_id(post, payment_method)
         end
-
-        elsif payment_method.is_a?(CheckoutPaymentId)
-          add_payment_id(post, payment_method)
-        end
       end
 
       def add_credit_card(post, credit_card)
