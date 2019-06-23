@@ -34,6 +34,12 @@ module ActiveMerchant #:nodoc:
         commit(:get, :get_payment, post)
       end
 
+      def get_actions(payment_id)
+        post = { id: payment_id }
+
+        commit(:get, :get_actions, post)
+      end
+
       def purchase(amount, payment_method, options={})
         options[:capture] = true
         authorize(amount, payment_method, options)
@@ -293,6 +299,8 @@ module ActiveMerchant #:nodoc:
           "#{base_url}/payments/#{authorization}/voids"
         elsif action == :get_payment
           "#{base_url}/payments/#{post[:id]}"
+        elsif action == :get_actions
+          "#{base_url}/payments/#{post[:id]}/actions"
         elsif action == :tokenize_credit_card
           "#{base_url}/tokens"
         else
@@ -324,6 +332,8 @@ module ActiveMerchant #:nodoc:
       def success_from(response, action = nil)
         if action == :get_payment
           response.key?('id')
+        elsif action == :get_actions
+          response.is_a?(Array) && response.length > 0
         elsif action == :tokenize_credit_card
           response.key?('token')
         else
@@ -355,7 +365,7 @@ module ActiveMerchant #:nodoc:
       }
 
       def authorization_from(raw)
-        raw['id']
+        raw.respond_to?(:key?) ? raw['id'] : nil
       end
 
       def error_code_from(succeeded, response)

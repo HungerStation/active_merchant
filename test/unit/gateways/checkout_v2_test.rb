@@ -275,6 +275,20 @@ class CheckoutV2Test < Test::Unit::TestCase
     assert_failure response
   end
 
+  def test_successful_get_actions
+    response = stub_comms(@gateway, :ssl_request) do
+      @gateway.get_actions('pay_1111')
+    end.respond_with(successful_get_actions_response)
+    assert_success response
+    assert_equal 'act_1111', response.params[0]['id']
+  end
+
+  def test_failed_get_actions
+    @gateway.expects(:raw_ssl_request).returns(failed_get_actions_response)
+    response = @gateway.get_actions('pay_1111')
+    assert_failure response
+  end
+
   def test_transcript_scrubbing
     assert_equal post_scrubbed, @gateway.scrub(pre_scrubbed)
   end
@@ -573,6 +587,52 @@ class CheckoutV2Test < Test::Unit::TestCase
   end
 
   def failed_get_payment_response
+    MockResponse.new(404, '')
+  end
+
+  def successful_get_actions_response
+    %(
+      [
+        {
+          "id": "act_1111",
+          "type": "Capture",
+          "processed_on": "2019-06-19T08:20:46Z",
+          "amount": 500,
+          "approved": true,
+          "response_code": "10000",
+          "response_summary": "Approved",
+          "reference": "am-1234",
+          "processing": {
+            "acquirer_transaction_id": "8137886490",
+            "acquirer_reference_number": "000844289729"
+          },
+          "metadata": {
+            "my_custom_val": "12345"
+          }
+        },
+        {
+          "id": "act_2222",
+          "type": "Authorization",
+          "processed_on": "2019-06-19T08:20:38Z",
+          "amount": 500,
+          "approved": true,
+          "auth_code": "867623",
+          "response_code": "10000",
+          "response_summary": "Approved",
+          "reference": "am-1234",
+          "processing": {
+            "acquirer_transaction_id": "8137886482",
+            "retrieval_reference_number": "000867623009"
+          },
+          "metadata": {
+            "my_custom_val": "12345"
+          }
+        }
+      ]
+    )
+  end
+
+  def failed_get_actions_response
     MockResponse.new(404, '')
   end
 

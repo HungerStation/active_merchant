@@ -19,7 +19,13 @@ module ActiveMerchant #:nodoc:
       end
 
       def initialize(success, message, params = {}, options = {})
-        @success, @message, @params = success, message, params.stringify_keys
+        if params.is_a?(Array)
+          @success, @message = success, message
+          @params = params.map{|param| param.stringify_keys }
+        else
+          @success, @message, @params = success, message, params.stringify_keys
+        end
+
         @test = options[:test] || false
         @authorization = options[:authorization]
         @fraud_review = options[:fraud_review]
