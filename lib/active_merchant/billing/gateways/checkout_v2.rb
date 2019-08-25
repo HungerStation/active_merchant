@@ -1,17 +1,5 @@
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
-    class CheckoutPaymentToken < PaymentToken
-      def type
-        'checkout_token'
-      end
-    end
-
-    class CheckoutPaymentId < PaymentToken
-      def type
-        'checkout_id'
-      end
-    end
-
     class CheckoutV2Gateway < Gateway
       self.display_name = 'Checkout.com Unified Payments'
       self.homepage_url = 'https://www.checkout.com/'
@@ -126,6 +114,18 @@ module ActiveMerchant #:nodoc:
           gsub(%r((Authorization: )[^\\]*)i, '\1[FILTERED]').
           gsub(%r(("number\\":\\")\d+), '\1[FILTERED]').
           gsub(%r(("cvv\\":\\")\d+), '\1[FILTERED]')
+      end
+
+      class CheckoutPaymentToken < PaymentToken
+        def type
+          'checkout_token'
+        end
+      end
+
+      class CheckoutPaymentId < PaymentToken
+        def type
+          'checkout_id'
+        end
       end
 
       private
@@ -370,6 +370,7 @@ module ActiveMerchant #:nodoc:
 
       def error_code_from(succeeded, response)
         return if succeeded
+
         if response['error_type'] && response['error_codes']
           "#{response["error_type"]}: #{response["error_codes"].join(", ")}"
         elsif response['error_type']
