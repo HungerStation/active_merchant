@@ -330,7 +330,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def success_from(response, action = nil)
-        if action == :get_payment
+        if %i[get_payment authorize].include? action
           response.key?('id')
         elsif action == :get_actions
           response.is_a?(Array) && response.length > 0
