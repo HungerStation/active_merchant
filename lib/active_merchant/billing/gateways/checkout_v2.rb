@@ -139,7 +139,7 @@ module ActiveMerchant #:nodoc:
           post[:billing_descriptor][:name] = options[:descriptor_name] if options[:descriptor_name]
           post[:billing_descriptor][:city] = options[:descriptor_city] if options[:descriptor_city]
         end
-        post[:metadata] = {}
+        post[:metadata] = options[:metadata] || {}
         post[:metadata][:udf5] = application_id || 'ActiveMerchant'
       end
 
