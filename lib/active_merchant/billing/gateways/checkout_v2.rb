@@ -34,6 +34,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def authorize(amount, payment_method, options={})
+        byebug
         post = {}
         post[:capture] = options[:capture] if options[:capture] != nil
         post[:capture_on] = options[:capture_on] if options[:capture_on]
@@ -263,6 +264,7 @@ module ActiveMerchant #:nodoc:
         raw_response = response = nil
 
         begin
+          puts post.to_json
           if method != :get
             raw_response = ssl_request(method, url, post.to_json, headers(action))
           else
