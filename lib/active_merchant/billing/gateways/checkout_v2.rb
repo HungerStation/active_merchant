@@ -42,6 +42,7 @@ module ActiveMerchant #:nodoc:
         add_customer_data(post, options)
         add_transaction_data(post, options)
         add_3ds(post, options)
+        add_redirects(post, options)
 
         commit(:post, :authorize, post)
       end
@@ -227,6 +228,11 @@ module ActiveMerchant #:nodoc:
           post[:'3ds'][:xid] =  options[:xid] if options[:xid]
           post[:'3ds'][:attempt_n3d] = options[:attempt_n3d] if options[:attempt_n3d]
         end
+      end
+
+      def add_redirects(post, options)
+        post[:success_url] = options[:success_url] if options[:success_url]
+        post[:failure_url] = options[:failure_url] if options[:failure_url]
       end
 
       def api_request(method, url, post = nil, action)
