@@ -106,6 +106,29 @@ module ActiveMerchant #:nodoc:
         commit(:post, :tokenize_credit_card, post)
       end
 
+      # Note: Tokenization needs the class to be initialized with the public key
+      # e.g.
+      # ActiveMerchant::Billing::CheckoutV2Gateway.new(
+      #  secret_key: 'sk_test_1'
+      #  public_key: 'sk_test_2'
+      # )
+      def tokenize_applepay_data(applepay_token, options={})
+        if @options[:public_key].blank?
+          raise KeyError, 'public_key is not present in options'
+        end
+
+        unless applepay_token.is_a?(ApplePayPaymentToken)
+          raise TypeError, 'applepay_token must be of type ApplePayPaymentToken'
+        end
+
+        post = {
+          type: 'applepay',
+          token_data: applepay_token.payment_data
+        }
+
+        commit(:post, :tokenize_applepay_data, post)
+      end
+
       def supports_scrubbing?
         true
       end
@@ -286,7 +309,7 @@ module ActiveMerchant #:nodoc:
 
       def headers(action)
         key = @options[:secret_key]
-        key = @options[:public_key] if action == :tokenize_credit_card
+        key = @options[:public_key] if %i[tokenize_credit_card tokenize_applepay_data].include?(action)
 
         {
           'Authorization' => key,
@@ -308,6 +331,8 @@ module ActiveMerchant #:nodoc:
         elsif action == :get_actions
           "#{base_url}/payments/#{post[:id]}/actions"
         elsif action == :tokenize_credit_card
+          "#{base_url}/tokens"
+        elsif action == :tokenize_applepay_data
           "#{base_url}/tokens"
         else
           "#{base_url}/payments/#{authorization}/#{action}"
@@ -340,7 +365,7 @@ module ActiveMerchant #:nodoc:
           response.key?('id')
         elsif action == :get_actions
           response.is_a?(Array) && response.length > 0
-        elsif action == :tokenize_credit_card
+        elsif %i[tokenize_credit_card tokenize_applepay_data].include? action
           response.key?('token')
         else
           response['response_summary'] == 'Approved' || !response.key?('response_summary') && response.key?('action_id')
