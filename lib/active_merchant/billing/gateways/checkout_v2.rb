@@ -35,7 +35,8 @@ module ActiveMerchant #:nodoc:
 
       def authorize(amount, payment_method, options={})
         post = {}
-        post[:capture] = options[:capture] || false
+        post[:capture] = options[:capture] if options[:capture] != nil
+        post[:capture_on] = options[:capture_on] if options[:capture_on]
 
         add_invoice(post, amount, options)
         add_payment_method(post, payment_method)
