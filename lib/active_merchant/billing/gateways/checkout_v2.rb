@@ -363,7 +363,7 @@ module ActiveMerchant #:nodoc:
 
       def success_from(response, action = nil)
         if action == :authorize
-          response.key?('approved') && response['approved']
+          (response.key?('approved') && response['approved']) || response['status'] == 'Pending'
         elsif action == :get_payment
           response.key?('id')
         elsif action == :get_actions
